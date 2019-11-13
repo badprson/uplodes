@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>demo test</title>
+    <script src="jquery.js"></script>
+    <script src="jquery.uploadify.js"></script>
+    <link rel="stylesheet" href="uploadify.css">
+</head>
+<body>
+    <center>
+        <input type="file" id="uploadify">
+    </center>
+</body>
+</html>
+<script>
+    $(document).ready(function(){
+        $("#uploadify").uploadify({
+            'swf':'uploadify.swf',
+            'uploader':'a.php',
+            'onUploadSuccess':function(file,data,msg){
+                console.log(file);
+                console.log(data);
+                console.log(msg);
+            }
+        })
+    });
+</script>

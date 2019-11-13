@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>slice</title>
+    <script src="../jquery.js"></script>
+</head>
+<body>
+        <div id="per_box" style="width: 350px; height: 15px; background-color: #cccccc">
+        <div id="per" style="width: 0%; height: 100%; background-color: #007CD5"></div>
+        <span id="per_num"></span>
+            </div>
+        <br />
+
+        <input type="file" name="file" id="file">
+        <input type="submit" value="上传" id="upload">
+
+        <div id="show_img" style="width: 3px;height: 3px"></div>
+</body>
+</html>
+<!-- ①  jQuery对象只能使用jQuery对象的属性和方法，JavaScript对象只能使用JavaScript对象的属性和方法；
+②   files[0]是JavaScript的属性 获取一/单张图片时；
+③   $('xx')是jQuery对象，$('xx')[0]是将jQuery对象：$('xx')转换为JavaScript对象，这样才可以使用JavaScript对象的属性和方法；
+④   我们再看这行代码的背景，HTML5支持multiple属性，即<input type="file">可能会添加multiple属性并赋值：multiple="multiple"，
+    即<input type="file" multiple="multiple">，这样一次性可同时上传多张图片，所以获得一张图片的方法就是：$('xx')[0].files[0]
+⑤   扩展：
+    $('xx')[0].files[0].size可获得文件的大小，单位是字节（B），使用$('xx')[0].files[0].size可用于判断文件的大小。 -->
+<script>
+    $(document).ready(function(){
+
+            $('#upload').on('click',function(){
+
+                    // 获取单个文件的信息
+                    var file= $("#file")[0].files[0];
+
+                    // 如果不是点击上传文件的话
+                    if(!file){
+
+                        // 触发 input 元素的 click 事件：
+                        $("#file").trigger("click");
+                    }
+
+                    // 定义当前浏览器传递的页数
+                    var chunk;
+                    upload(file);
+
+                    // 定义一个方法
+                    function upload(file){
+                        var every_size = 1024;    //  字节
+                        var chunks = Math.ceil(file.size/every_size);   // 总页数
+                        // alert(chunks)
+                        filename = file.name + "_chunk";
+                        var chunk = window.localStorage.getItem(filename) || 1;
+                        chunk = chunk >= chunks ? chunks : parseInt(chunk);
+                        
+                        //获取图片数据
+                        var offset = (chunk-1) * every_size;
+                        var limit = offset > file.size ? file.size : chunk * every_size;
+                        var per = (limit/file.size * 100).toFixed(2);
+                        // console.log(per);
+                        var data = file.slice(offset,limit);    //每页的条数
+                        
+                        //将数据发送给后端
+                        var form = new FormData();
+                        form.append('data',data);
+                        form.append('filename',filename);
+                        form.append('file.size',file.size);
+                        var url = "file_do.php";
+
+                        $.ajax({
+                            type:"POST",
+                            data:form,
+                            dataType:"json",
+                            url:url,
+                            processData: false,
+                            contentType: false,
+                            cache: false,
+                            success:function(res){
+                            
+                                    if(res.error == 0 ){
+
+                                            if(chunk >= chunks){
+                                                per = 100 + "%";
+                                                $('#per').css({width : per});
+                                                $("#per_num").text(per);
+                                                var video = "<img src='"+res.data.path+"' controls='controls'>";
+							                    $("#show_img").append(video);
+                                            }else{
+                                                chunk = chunk+1;
+                                                window.localStorage.setItem(filename,chunk);
+                                                per = per + "%";
+                                                $("#per").css({width:per});
+                                                $("#per_num").text(per);
+                                                upload(file);
+                                            }
+                                    }
+
+                            }
+                            
+                        })
+
+                    }
+            });
+    });
+</script>
